@@ -4,7 +4,7 @@ function UserList() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    axios.get("http://172.17.15.196:3000/users")
+    axios.get("http://192.168.110.146:3000/users")
       .then(res => setUsers(res.data))
       .catch(err => console.error("Lỗi khi lấy user:", err));
   }, []);
