@@ -10,7 +10,7 @@ function AddUser() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios.post("http://192.168.110.146:3000/users", newUser)
+    axios.post("http://192.168.110.210:3000/users", newUser)
       .then(() => {
         alert("Thêm user thành công!");
         setNewUser({ name: "", email: "" });
