@@ -1,21 +1,43 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-function AddUser() {
-  const [newUser, setNewUser] = useState({ name: "", email: "" });
+function AddUser({ fetchUsers }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
 
-  const handleChange = (e) => {
-    setNewUser({ ...newUser, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
+  // 🧩 Hàm xử lý submit có kiểm tra validation
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    axios.post("http://192.168.110.146:3000/users", newUser)
-      .then(() => {
-        alert("Thêm user thành công!");
-        setNewUser({ name: "", email: "" });
-      })
-      .catch(err => console.error("Lỗi khi thêm user:", err));
+
+    // Kiểm tra tên trống
+    if (!name.trim()) {
+      alert("Name không được để trống");
+      return;
+    }
+
+    // Kiểm tra định dạng email
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      alert("Email không hợp lệ");
+      return;
+    }
+
+    try {
+      // Gửi dữ liệu lên backend
+      await axios.post("http://192.168.110.210:3000/users", { name, email });
+
+      alert("Thêm user thành công!");
+
+      // Reset form
+      setName("");
+      setEmail("");
+
+      // Gọi lại hàm fetchUsers() để cập nhật danh sách
+      if (fetchUsers) fetchUsers();
+
+    } catch (err) {
+      console.error("Lỗi khi thêm user:", err);
+      alert("Không thể thêm user, vui lòng thử lại!");
+    }
   };
 
   return (
@@ -24,19 +46,15 @@ function AddUser() {
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          name="name"
           placeholder="Tên"
-          value={newUser.name}
-          onChange={handleChange}
-          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
         <input
-          type="email"
-          name="email"
+          type="text"
           placeholder="Email"
-          value={newUser.email}
-          onChange={handleChange}
-          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <button type="submit">Thêm</button>
       </form>
