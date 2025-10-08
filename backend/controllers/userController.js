@@ -13,6 +13,7 @@ exports.getUsers = async (req, res) => {
 
 // POST /users
 exports.createUser = async (req, res) => {
+  console.log("Request body:", req.body)
   try {
     const { name, email } = req.body || {};
     if (!name || !email) {
