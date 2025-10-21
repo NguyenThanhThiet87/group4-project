@@ -2,7 +2,7 @@ const mongoose = require('mongoose');           // <-- THÊM DÒNG NÀY
 const User = require('../models/User');
 
 // GET /users
-exports.getUsers = async (_req, res) => {
+exports.getUsers = async (req, res) => {
   try {
     const users = await User.find().lean();
     res.json(users);
