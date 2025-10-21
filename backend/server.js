@@ -9,7 +9,9 @@ app.use(express.json());
 
 // routes
 const userRoutes = require('./routes/user');
-app.use('/', userRoutes);
+const authRoutes = require('./routes/auth')
+app.use('/auth', authRoutes)
+app.use('/user', userRoutes);
 
 const PORT = process.env.PORT || 3000;
 
