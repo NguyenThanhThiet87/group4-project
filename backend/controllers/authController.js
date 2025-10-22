@@ -13,11 +13,16 @@ exports.login = async (req, res) => {
         if (user != null) {
             if (bcrypt.compare(password, user.password)) //dùng bcrypt
             {
-                // ký token đơn giản
+                // ký token với đầy đủ thông tin user
                 const token = jwt.sign(
-                    { sub: user._id.toString() },                 // payload tối thiểu
+                    { 
+                        sub: user._id.toString(),
+                        id: user._id.toString(),
+                        email: user.email,
+                        role: user.role  // ← QUAN TRỌNG: thêm role vào token
+                    },
                     'dev_secret', // thay bằng biến môi trường trong production
-                    { expiresIn: '1h' }                            // hạn dùng tuỳ ý
+                    { expiresIn: '1h' }
                 );
                 res.json({accessToken: token})
             } else {

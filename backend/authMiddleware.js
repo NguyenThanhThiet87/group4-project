@@ -2,14 +2,12 @@ const jwt = require('jsonwebtoken');
 const tokenBlacklist = require('./blacklist'); // Import blacklist
 
 exports.authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
+    const token = req.headers['authorization'];
+    
     if (token == null) {
         return res.sendStatus(401);
     }
 
-    // --- BƯỚC KIỂM TRA QUAN TRỌNG NHẤT ---
     // Kiểm tra xem token có nằm trong blacklist không.
     if (tokenBlacklist.has(token)) {
         return res.status(401).json({ message: 'Token đã bị vô hiệu hóa' });
@@ -23,4 +21,17 @@ exports.authenticateToken = (req, res, next) => {
         req.user = user;
         next();
     });
+};
+
+// Middleware kiểm tra role admin
+exports.checkAdmin = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Chỉ admin mới có quyền thực hiện hành động này' });
+    }
+    
+    next();
 };
