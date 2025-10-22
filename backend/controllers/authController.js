@@ -17,7 +17,6 @@ exports.login = async (req, res) => {
                 const token = jwt.sign(
                     { 
                         sub: user._id.toString(),
-                        id: user._id.toString(),
                         email: user.email,
                         role: user.role  // ← QUAN TRỌNG: thêm role vào token
                     },
