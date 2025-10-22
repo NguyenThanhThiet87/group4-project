@@ -32,8 +32,10 @@ const Login = () => {
             const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
             const payload = JSON.parse(atob(padded));
             // backend uses `sub` for user id
-            const id = payload.sub ?? payload._id ?? payload.userId ?? null;
-            console.log("Token id:", id);
+            const id = payload.sub ?? null;
+            // Lấy vai trò (role) nếu có trong payload
+            const role = payload.role ?? null;
+            console.log("Token id:", id, "role:", role);
 
             if (id) {
               const userRes = await axios.get(`http://localhost:3000/user/users/${id}`, {
@@ -45,13 +47,18 @@ const Login = () => {
                 localStorage.setItem("user", JSON.stringify(user));
               }
             }
+            alert("Đăng nhập thành công!");
+
+            if(role === "admin")
+            {
+              navigate("/UserList"); // điều hướng sang trang Profile
+            }else if(role === "user"){
+              navigate("/Profile"); // điều hướng sang trang Profile
+            }
           }
         } catch (err) {
           console.warn("Could not fetch user after login:", err);
         }
-
-      alert("Đăng nhập thành công!");
-      navigate("/Profile"); // điều hướng sang trang Profile
     } catch (error) {
       alert("Sai email hoặc mật khẩu!");
     }

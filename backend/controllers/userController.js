@@ -10,6 +10,7 @@ exports.getUsers = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 //
 exports.getUsersById = async (req, res) => {
   try {
@@ -21,6 +22,7 @@ exports.getUsersById = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 // POST /users
 exports.createUser = async (req, res) => {
   try {
