@@ -12,7 +12,7 @@ function UserList() {
   // 🟢 Lấy danh sách người dùng khi load trang
   useEffect(() => {
     fetchUsers();
-  }, []);
+ }, []);
 
   const fetchUsers = async () => {
     setLoading(true);

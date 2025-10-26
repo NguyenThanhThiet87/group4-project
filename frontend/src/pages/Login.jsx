@@ -14,11 +14,11 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const res = await axios.post("http://localhost:3000/auth/login", formData);
-
+      console.log("Login response:", res.data);
       // Lưu token luôn
       const token = res.data.accessToken;
       localStorage.setItem("token", token);
@@ -38,9 +38,7 @@ const Login = () => {
             console.log("Token id:", id, "role:", role);
 
             if (id) {
-              const userRes = await axios.get(`http://localhost:3000/user/users/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
+              const userRes = await axios.get(`http://localhost:3000/user/users/${id}`);
               const user = userRes.data?.user ?? userRes.data;
 
               if (user && typeof user === "object") {
@@ -86,6 +84,9 @@ const Login = () => {
         />
         <button type="submit">Đăng nhập</button>
       </form>
+      <p>
+        <Link to="/ForgotPassword">Quên mật khẩu?</Link>
+      </p>
       <p>
         <Link to="/Register">Đăng ký</Link>
       </p>

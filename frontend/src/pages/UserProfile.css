@@ -1,39 +1,158 @@
+/* 🌤️ BỐ CỤC CHUNG */
 .profile-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 100vh;
-  background: linear-gradient(135deg, #74b9ff, #a29bfe);
+  padding: 50px 20px;
+  background: linear-gradient(135deg, #e0f2ff, #f5f7ff);
+  font-family: "Poppins", "Segoe UI", sans-serif;
+  color: #2b2d42;
 }
 
+/* 🧾 THẺ CHỨA THÔNG TIN NGƯỜI DÙNG */
 .profile-form {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  width: 350px;
+  background: #ffffff;
+  padding: 40px 35px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(9, 132, 227, 0.1);
+  width: 400px;
+  max-width: 95%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  align-items: stretch;
+  gap: 16px;
+  transition: all 0.3s ease;
 }
 
-.profile-form input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+.profile-form:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(9, 132, 227, 0.15);
 }
 
-.profile-form button {
-  padding: 10px;
-  border: none;
-  background: #0984e3;
-  color: white;
-  font-weight: bold;
-  border-radius: 8px;
+/* 🖼️ ẢNH ĐẠI DIỆN */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.avatar-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #dce6f9;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  background: #f8faff;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.avatar-img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px rgba(9, 132, 227, 0.2);
+}
+
+/* Nút upload ảnh */
+.avatar-input {
   cursor: pointer;
+  color: #0b67c6;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.avatar-input:hover {
+  color: #005bb5;
+}
+
+/* 🏷️ NHÃN VÀ Ô NHẬP LIỆU */
+.profile-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3b3e46;
+}
+
+.profile-form input[type="text"],
+.profile-form input[type="email"] {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #dbe4f0;
+  border-radius: 10px;
+  background: #f9fbff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.profile-form input:focus {
+  border-color: #0984e3;
+  box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.15);
+  background: #fff;
+}
+
+.profile-form input[disabled] {
+  background: #f4f6fa;
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* 🟦 NÚT CHÍNH */
+.profile-form button {
+  margin-top: 10px;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #0984e3 0%, #3b82f6 100%);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
 }
 
 .profile-form button:hover {
-  background: #74b9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(9, 132, 227, 0.25);
+}
+
+.profile-form button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* 🧩 TỔNG QUAN */
+h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2b2d42;
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 500px) {
+  .profile-form {
+    width: 100%;
+    padding: 24px 20px;
+  }
+
+  .avatar-img {
+    width: 90px;
+    height: 90px;
+  }
+
+  .profile-form button {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
 }
