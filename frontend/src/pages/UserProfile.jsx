@@ -30,9 +30,7 @@ const UserProfile = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`http://localhost:3000/user/users/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`http://localhost:3000/user/users/${id}`);
       const payload = res.data?.user ?? res.data?.data ?? res.data;
       const normalized = Array.isArray(payload) ? payload[0] : payload;
       setUser(normalized || { name: "", email: "", avatar: "" });
