@@ -1,16 +1,44 @@
 import React from "react";
+import { Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import UserProfile from "./pages/UserProfile";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import UserList from "./UserList";
-import AddUser from "./AddUser";
 
 function App() {
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Quản lý người dùng</h2>
-      <AddUser />
-      <hr />
-      <UserList />
-    </div>
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route path="/Register" element={<Register />} />
+      <Route path="/Profile" element={<UserProfile />} />
+      <Route path="/ForgotPassword" element={<ForgotPassword/>} />
+      <Route path="/reset-password" element={<ResetPassword/>} />
+      <Route path="/UserList" element={<UserList />} />
+    </Routes>
   );
 }
 
 export default App;
+// import React from "react";
+// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// import Login from "./pages/Login";
+// import Register from "./pages/Register";
+
+// function App() {
+//   return (
+//     <Router>
+//       <Routes>
+//         {/* Trang đăng nhập */}
+//         <Route path="/" element={<Login />} />
+
+//         {/* Trang đăng ký */}
+//         <Route path="/register" element={<Register />}>
+//         </Route>
+//       </Routes>
+//     </Router>
+//   );
+// }
+
+// export default App;
