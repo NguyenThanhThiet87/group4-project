@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./ResetPassword.css";
@@ -7,25 +7,22 @@ function ResetPassword() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // get email from location.state or query string
-  const getEmailFromLocation = () => {
-    if (location?.state?.email) return location.state.email;
+  // get token from location.state or query string
+  const getTokenFromLocation = () => {
+    if (location?.state?.token) return location.state.token;
     const params = new URLSearchParams(location.search || "");
-    return params.get("email") || "";
+    return params.get("token") || "";
   };
 
-  const [email] = useState(getEmailFromLocation());
+  const [token] = useState(getTokenFromLocation());
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // optional: prefill email input if you want it visible later
-  }, []);
 
   const validate = () => {
-    if (!email) {
-      alert("Không có email. Quay lại trang quên mật khẩu và nhập email.");
+    if (!token) {
+      alert("Khong ton tai");
       return false;
     }
     if (!password || password.length < 6) {
@@ -46,13 +43,14 @@ function ResetPassword() {
     setLoading(true);
     try {
       // Try common reset endpoint. Adjust if backend uses different path.
-      await axios.post("http://localhost:3000/auth/reset-password", {
-        email,
-        password,
+      const res = await axios.post("http://localhost:3000/auth/reset-password", {
+        "token": token,
+        "newPassword": password
       });
-
-      alert("Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.");
-      navigate("/Login");
+      
+      alert(res.data.message);
+      
+      navigate("/");
     } catch (err) {
       console.error("Reset password error:", err);
       // show backend message if any
@@ -68,9 +66,6 @@ function ResetPassword() {
       <div className="forgot-box">
         <h2 className="forgot-title">ĐẶT LẠI MẬT KHẨU</h2>
         <form onSubmit={handleSubmit} className="forgot-form">
-          <label>Email</label>
-          <input type="email" value={email} readOnly className="readonly-input" />
-
           <label> Mật khẩu mới </label>
           <input
             type="password"

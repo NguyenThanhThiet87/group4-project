@@ -14,7 +14,7 @@ function App() {
       <Route path="/Register" element={<Register />} />
       <Route path="/Profile" element={<UserProfile />} />
       <Route path="/ForgotPassword" element={<ForgotPassword/>} />
-      <Route path="/ResetPassword" element={<ResetPassword/>} />
+      <Route path="/reset-password" element={<ResetPassword/>} />
       <Route path="/UserList" element={<UserList />} />
     </Routes>
   );

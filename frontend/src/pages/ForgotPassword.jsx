@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ForgotPassword.css";
+import axios from "axios";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmed = (email || "").trim();
     if (!trimmed) {
@@ -20,8 +21,17 @@ function ForgotPassword() {
       return;
     }
 
-    // navigate to ResetPassword, pass email in state and querystring for compatibility
-    navigate(`/ResetPassword?email=${encodeURIComponent(trimmed)}`, { state: { email: trimmed } });
+    try {
+        axios.post("http://localhost:3000/auth/forgot-password", {"email": trimmed});
+        alert("Yeu cau da duoc gui qua email cua ban. Vui long kiem tra gmail")
+      } catch (error) {
+        console.error("❌ Error send email user info:", error);
+        alert("Lỗi khi gui yeu cau. Vui lòng thử lại.");
+        return;
+      }
+
+    // // navigate to ResetPassword, pass email in state and querystring for compatibility
+    // navigate(`/ResetPassword?email=${encodeURIComponent(trimmed)}`, { state: { email: trimmed } });
   };
 
   return (

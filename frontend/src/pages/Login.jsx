@@ -18,7 +18,7 @@ const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const res = await axios.post("http://localhost:3000/auth/login", formData);
-
+      console.log("Login response:", res.data);
       // Lưu token luôn
       const token = res.data.accessToken;
       localStorage.setItem("token", token);
