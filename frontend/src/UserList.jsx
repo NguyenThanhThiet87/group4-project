@@ -9,7 +9,7 @@ function UserList() {
   // 1️⃣ Lấy danh sách user
   useEffect(() => {
     axios
-      .get("http://192.168.110.210:3000/users")
+      .get("http://localhost:3000/user/users")
       .then(res => setUsers(res.data))
       .catch(err => console.error("Lỗi khi lấy user:", err));
   }, []);
@@ -17,7 +17,7 @@ function UserList() {
   // 2️⃣ Hàm xóa user
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://192.168.110.210:3000/users/${id}`);
+      await axios.delete(`http://localhost:3000/user/users/${id}`);
       console.log("Xid: ",users.filter(user => user._id !== id));
       // Cập nhật lại danh sách user sau khi xóa
       setUsers(users.filter(user => user._id !== id));

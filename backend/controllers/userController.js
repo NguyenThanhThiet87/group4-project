@@ -43,7 +43,7 @@ exports.updateUser = async (req, res) => {
 
   const user = await User.findById(id);
   if (user != null) {
-    const { name, email, password } = req.body;
+    const { name, email} = req.body;
     if (email != user.email) {
       const isExistUser = await User.findOne({ email: email })
       if (isExistUser != null) {
@@ -51,13 +51,13 @@ exports.updateUser = async (req, res) => {
       } else {
         user.name = name;
         user.email = email;
-        user.password = password;
+        
         await user.save();
         return res.status(200).json(user);
       }
     } else {
       user.name = name;
-      user.password = password;
+
       await user.save();
       return res.status(200).json(user);
     }

@@ -14,7 +14,7 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const res = await axios.post("http://localhost:3000/auth/login", formData);
@@ -32,26 +32,31 @@ const Login = () => {
             const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
             const payload = JSON.parse(atob(padded));
             // backend uses `sub` for user id
-            const id = payload.sub ?? payload._id ?? payload.userId ?? null;
-            console.log("Token id:", id);
+            const id = payload.sub ?? null;
+            // Lấy vai trò (role) nếu có trong payload
+            const role = payload.role ?? null;
+            console.log("Token id:", id, "role:", role);
 
             if (id) {
-              const userRes = await axios.get(`http://localhost:3000/user/users/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
+              const userRes = await axios.get(`http://localhost:3000/user/users/${id}`);
               const user = userRes.data?.user ?? userRes.data;
 
               if (user && typeof user === "object") {
                 localStorage.setItem("user", JSON.stringify(user));
               }
             }
+            alert("Đăng nhập thành công!");
+
+            if(role === "admin")
+            {
+              navigate("/UserList"); // điều hướng sang trang Profile
+            }else if(role === "user"){
+              navigate("/Profile"); // điều hướng sang trang Profile
+            }
           }
         } catch (err) {
           console.warn("Could not fetch user after login:", err);
         }
-
-      alert("Đăng nhập thành công!");
-      navigate("/Profile"); // điều hướng sang trang Profile
     } catch (error) {
       alert("Sai email hoặc mật khẩu!");
     }
@@ -79,6 +84,9 @@ const Login = () => {
         />
         <button type="submit">Đăng nhập</button>
       </form>
+      <p>
+        <Link to="/ForgotPassword">Quên mật khẩu?</Link>
+      </p>
       <p>
         <Link to="/Register">Đăng ký</Link>
       </p>

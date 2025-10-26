@@ -3,89 +3,166 @@ import axios from "axios";
 import "./UserProfile.css";
 
 const UserProfile = () => {
-  const [user, setUser] = useState({ name: "", email: "" });
+  const [user, setUser] = useState({ name: "", email: "", avatar: "" });
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
-  // 🟢 Gọi API lấy thông tin user khi load trang
-useEffect(() => {
+  // Get user on page load
+  useEffect(() => {
     let storedUser = null;
     try {
       const raw = localStorage.getItem("user");
       if (raw) storedUser = JSON.parse(raw);
-      console.log("Stored user from localStorage:", storedUser);
     } catch (err) {
       console.warn("Invalid stored user JSON, ignoring", err);
       storedUser = null;
     }
 
-    const id = storedUser[0]._id
-    if (id != null) {
-      fetchUser(id);
-    } else {
-      alert("Không tìm thấy thông tin người dùng. Hãy đăng nhập lại!");
-    }
+    const id = storedUser?.[0]?._id;
+    if (id) fetchUser(id);
+    else alert("Không tìm thấy thông tin người dùng. Hãy đăng nhập lại!");
   }, []);
 
-  // 🟢 Hàm gọi API lấy user theo ID
+  // Fetch user by ID from API
   const fetchUser = async (id) => {
     setLoading(true);
     try {
-      // Try the most common endpoint first (/users/:id), fallback to /user/users/:id
-      let res = await axios.get(`http://localhost:3000/user/users/${id}`);
-    
-      // Normalize response: many APIs nest the user under `user` or `data`
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`http://localhost:3000/user/users/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const payload = res.data?.user ?? res.data?.data ?? res.data;
-
-      // If the payload is an array, pick the first item
       const normalized = Array.isArray(payload) ? payload[0] : payload;
-
-      // Ensure we have an object with name/email to avoid uncontrolled input warnings
-      setUser(normalized || { name: "", email: "" });
+      setUser(normalized || { name: "", email: "", avatar: "" });
     } catch (error) {
-      console.error("❌ Lỗi khi lấy thông tin user:", error);
+      console.error("❌ Error fetching user info:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🟢 Xử lý thay đổi trong input
+  // Handle text input changes
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
-  // 🟢 Xử lý cập nhật user
-  const handleUpdate = async () => {
-    if (!user || !user._id) {
-      alert("Không có id user để cập nhật.");
-      return;
-    }
-
-    try {
-        let res = await axios.put(`http://localhost:3000/user/users/${user._id}`, user);
-
-      const payload = res.data?.user ?? res.data?.data ?? res.data;
-      setUser(Array.isArray(payload) ? payload[0] : payload);
-      setIsEditing(false);
-      alert("✅ Cập nhật thành công!");
-    } catch (error) {
-      console.error("❌ Lỗi khi cập nhật user:", error);
+  // Handle new file selection
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      // Show image preview
+      const preview = URL.createObjectURL(file);
+      setUser({ ...user, image: preview });
     }
   };
 
-  if (loading) {
+  // Handle profile update
+  const handleUpdate = async () => {
+    if (!user || !user._id) {
+      alert("User ID not found for update.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Authentication token not found. Please log in again.");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Step 1: Upload avatar if a new one is selected
+      if (selectedFile) {
+        const avatarFormData = new FormData();
+        avatarFormData.append("id", user._id);
+        avatarFormData.append("avatar", selectedFile);
+
+        try {
+          await axios.post(
+            "http://localhost:3000/user/users/upload-avatar",
+            avatarFormData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+        } catch (uploadError) {
+          console.error("❌ Error uploading avatar:", uploadError);
+          alert("Lỗi khi tải lên ảnh đại diện. Vui lòng thử lại.");
+          setUploading(false);
+          return;
+        }
+      }
+
+      // Step 2: Update user's name and email
+      try {
+        await axios.put(
+          `http://localhost:3000/user/users/${user._id}`,
+          { name: user.name, email: user.email },
+          {
+            headers: {
+              Authorization: token,
+            },
+          }
+        );
+      } catch (updateError) {
+        console.error("❌ Error updating user info:", updateError);
+        alert("Lỗi khi cập nhật thông tin. Vui lòng thử lại.");
+        setUploading(false);
+        return;
+      }
+
+      setSelectedFile(null);
+      setIsEditing(false);
+      alert("✅ Cập nhật thành công!");
+      fetchUser(user._id);
+    } catch (error) {
+      console.error("❌ An unexpected error occurred during update:", error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (loading)
     return (
       <div className="profile-container">
         <h2>Thông tin người dùng</h2>
         <p>Đang tải dữ liệu...</p>
       </div>
     );
-  }
+
+  const getAvatarSrc = () => {
+    if (user.image) {
+      if (user.image.startsWith("blob:")) {
+        return user.image;
+      }
+      return user.image;
+    }
+    return "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+  };
 
   return (
     <div className="profile-container">
       <h2>Thông tin người dùng</h2>
       <div className="profile-form">
+        <div className="avatar-section">
+          <img src={getAvatarSrc()} alt="Avatar" className="avatar-img" />
+
+          {isEditing && (
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="avatar-input"
+            />
+          )}
+        </div>
+
         <label>Họ tên:</label>
         <input
           type="text"
@@ -107,7 +184,9 @@ useEffect(() => {
         {!isEditing ? (
           <button onClick={() => setIsEditing(true)}>Sửa thông tin</button>
         ) : (
-          <button onClick={handleUpdate}>Cập nhật</button>
+          <button onClick={handleUpdate} disabled={uploading}>
+            {uploading ? "Đang cập nhật..." : "Cập nhật"}
+          </button>
         )}
       </div>
     </div>
@@ -115,4 +194,5 @@ useEffect(() => {
 };
 
 export default UserProfile;
+
 
