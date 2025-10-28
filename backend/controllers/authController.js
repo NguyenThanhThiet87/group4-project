@@ -6,6 +6,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
 const tokenBlacklist = require('../blacklist');
+const { match } = require('assert');
 
 // ← THÊM: Cấu hình Nodemailer (Gmail)
 const transporter = nodemailer.createTransport({
@@ -22,7 +23,8 @@ exports.login = async (req, res) => {
         const regex = new RegExp("[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+")
         const user = await User.findOne({ email: email })
         if (user != null) {
-            if (bcrypt.compare(password, user.password)) //dùng bcrypt
+            const match = await bcrypt.compare(password, user.password)
+            if (match) //dùng bcrypt
             {
                 // ký token với đầy đủ thông tin user
                 const token = jwt.sign(
@@ -94,7 +96,7 @@ exports.forgotPassword = async (req, res) => {
         await user.save();
         
         // 6. Tạo link reset password
-        const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+        const resetUrl = `http://localhost:3001/reset-password?token=${resetToken}`;
 
         // 7. Cấu hình nội dung email
         const mailOptions = {
