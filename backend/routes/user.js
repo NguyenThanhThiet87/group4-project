@@ -4,7 +4,7 @@ const userController = require('../controllers/userController');
 const {upload} = require('../cloudinary'); 
 const { authenticateToken, checkAdmin } = require('../authMiddleware');
 
-router.get('/users',userController.getUsers);
+router.get('/users',authenticateToken, checkAdmin,userController.getUsers);
 router.get('/users/:id', userController.getUsersById);
 router.post('/users', userController.createUser);
 
