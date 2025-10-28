@@ -20,12 +20,14 @@ const handleSubmit = async (e) => {
       const res = await axios.post("http://localhost:3000/auth/login", formData);
       console.log("Login response:", res.data);
       // Lưu token luôn
-      const token = res.data.accessToken;
-      localStorage.setItem("token", token);
+      const token = res.data;
+      localStorage.setItem("accessToken", token.accessToken);
+      localStorage.setItem("refreshToken", token.refreshToken);
+      
       console.log("Decoded token payload:", token);
       // Nếu backend trả user trong response thì lưu luôn
       try {
-          const parts = token.split(".");
+          const parts = token.accessToken.split(".");
           if (parts.length >= 2) {
             // base64url -> base64 + padding
             const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
@@ -61,6 +63,7 @@ const handleSubmit = async (e) => {
       alert("Sai email hoặc mật khẩu!");
     }
   };
+
 
   return (
     <div className="auth-container">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./UserList.css"; // bạn có thể tạo file CSS riêng nếu muốn
+import { useNavigate } from "react-router-dom";
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -8,6 +9,7 @@ function UserList() {
   const [formData, setFormData] = useState({ name: "", email: "" });
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const navigate = useNavigate();
 
   // 🟢 Lấy danh sách người dùng khi load trang
   useEffect(() => {
@@ -77,12 +79,33 @@ function UserList() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleLogout = async () => {
+    const token = localStorage.getItem("token");
+    const refreshToken = localStorage.getItem("refreshToken");
+
+    try {
+      await axios.post(
+        "http://localhost:3000/auth/logout",
+        { refreshToken },
+        { headers: { Authorization: token } }
+      );
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      navigate("/");
+    }
+  };
+
 
   if (loading) return <p>Đang tải danh sách người dùng...</p>;
 
   return (
     <div className="admin-container">
       <h2>👤 Quản lý người dùng</h2>
+      <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
 
       {/* Danh sách user */}
       <table className="user-table">
