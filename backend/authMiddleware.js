@@ -23,15 +23,19 @@ exports.authenticateToken = (req, res, next) => {
     });
 };
 
-// Middleware kiểm tra role admin
-exports.checkAdmin = (req, res, next) => {
+// Middleware kiểm tra role
+exports.checkRole = (...allowedRoles) => {
+  // chuẩn hoá mảng role cho chắc
+  const allow = new Set(allowedRoles.map(r => String(r).toLowerCase()));
+
+  return (req, res, next) => {
     if (!req.user) {
-        return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: 'Unauthorized' });
     }
-    
-    if (req.user.role !== 'admin') {
-        return res.status(403).json({ message: 'Chỉ admin mới có quyền thực hiện hành động này' });
+    const role = String(req.user.role || '').toLowerCase();
+    if (!allow.has(role)) {
+      return res.status(403).json({ message: 'Không đủ quyền' });
     }
-    
     next();
+  };
 };
