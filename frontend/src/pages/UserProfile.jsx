@@ -3,42 +3,7 @@ import axios from "axios";
 import "./UserProfile.css";
 import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-
-
-const refreshToken = async (navigate) => {
-    console.log("Refreshing token...");
-  try {
-    // Lấy refresh token đã lưu
-    const savedRefreshToken = localStorage.getItem("refreshToken");
-    
-    if (!savedRefreshToken)
-    {
-      navigate("/");
-      alert("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
-      return;
-    }
-
-    const res = await axios.post(
-      "http://localhost:3000/auth/refresh-token",
-      { refreshToken: savedRefreshToken } // gửi dưới dạng object
-    );
-
-    // res.data = { accessToken, refreshToken? }
-    const { accessToken} = res.data;
-
-    if (accessToken) {
-      localStorage.setItem("accessToken", accessToken); // cập nhật access token
-      console.log("New access token:", accessToken);
-    }
-
-  } catch (error) {
-    console.error("Failed to refresh token:", error);
-    // Nếu refresh thất bại → logout
-    localStorage.removeItem("token");
-    alert("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
-  }
-};
-
+import api from '../axiosConfig';
 
 const UserProfile = () => {
   const [user, setUser] = useState({ name: "", email: "", avatar: "" });
@@ -50,44 +15,46 @@ const UserProfile = () => {
 
   // Get user on page load
   useEffect(() => {
-       // Gọi ngay khi mount
-    refreshToken(navigate);
-         // Set interval với callback
-    const interval = setInterval(() => {
-      refreshToken(navigate);
-    }, 10000);
 
-    let storedUser = null;
-    try {
-      const raw = localStorage.getItem("user");
-      if (raw) storedUser = JSON.parse(raw);
-    } catch (err) {
-      console.warn("Invalid stored user JSON, ignoring", err);
-      storedUser = null;
-    }
+    //lay id user da dang nhap
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const id = storedUser?.id;
 
-    const id = storedUser?.[0]?._id;
-    if (id) fetchUser(id);
-    else alert("Không tìm thấy thông tin người dùng. Hãy đăng nhập lại!");
+    if (id) 
+      fetchUser(id);
+    else 
+      alert("Không tìm thấy thông tin người dùng. Hãy đăng nhập lại!");
 
-        // Cleanup khi unmount
-    return () => clearInterval(interval);
   }, []);
 
   // Fetch user by ID from API
   const fetchUser = async (id) => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`http://localhost:3000/user/users/${id}`);
-      const payload = res.data?.user ?? res.data?.data ?? res.data;
-      const normalized = Array.isArray(payload) ? payload[0] : payload;
-      setUser(normalized || { name: "", email: "", avatar: "" });
-    } catch (error) {
+      setLoading(true);
+      try {
+        // 1. Lấy token từ localStorage
+        const token = localStorage.getItem("accessToken");
+
+        // 2. Kiểm tra nếu có token
+        if (!token) {
+          alert("Không tìm thấy token. Vui lòng đăng nhập lại.");
+          setLoading(false);
+          navigate("/"); // Điều hướng về trang đăng nhập
+          return;
+        }
+
+        // 3. Thêm token vào headers của request
+        const res = await api.get(`user/users/${id}`);
+
+        const payload = res.data?.user ?? res.data?.data ?? res.data;
+        const normalized = Array.isArray(payload) ? payload[0] : payload;
+        setUser(normalized || { name: "", email: "", avatar: "" });
+
+      } catch (error) {
       console.error("❌ Error fetching user info:", error);
     } finally {
       setLoading(false);
     }
-  };
+    };
 
   // Handle text input changes
   const handleChange = (e) => {
@@ -104,7 +71,6 @@ const UserProfile = () => {
       setUser({ ...user, image: preview });
     }
   };
-
 
   // Handle profile update
   const handleUpdate = async () => {
@@ -134,7 +100,7 @@ const UserProfile = () => {
             avatarFormData,
             {
               headers: {
-                "Content-Type": "multipart/form-data",
+                "Content-Type": "multipart/form-data", 
               },
             }
           );
