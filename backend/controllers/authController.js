@@ -71,8 +71,9 @@ exports.register = async (req, res) => {
     }
 }
 
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
     const token = req.headers['authorization'];
+    const { refreshToken } = req.body || {};
 
     if (!token) {
         return res.status(400).json({ message: 'Không tìm thấy token' });
@@ -80,6 +81,10 @@ exports.logout = (req, res) => {
 
     // Thêm token vào blacklist
     tokenBlacklist.add(token);
+
+    if (refreshToken) {
+        await RefreshToken.deleteOne({ refreshToken: refreshToken });
+    }
 
     res.status(200).json({ message: 'Đăng xuất thành công' });
 };
