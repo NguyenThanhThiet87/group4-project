@@ -38,15 +38,8 @@ const handleSubmit = async (e) => {
             // Lấy vai trò (role) nếu có trong payload
             const role = payload.role ?? null;
             console.log("Token id:", id, "role:", role);
-
-            if (id) {
-              const userRes = await axios.get(`http://localhost:3000/user/users/${id}`);
-              const user = userRes.data?.user ?? userRes.data;
-
-              if (user && typeof user === "object") {
-                localStorage.setItem("user", JSON.stringify(user));
-              }
-            }
+            localStorage.setItem("user", JSON.stringify({ id, role }));
+            
             alert("Đăng nhập thành công!");
 
             if(role === "admin")
