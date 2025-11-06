@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios";
 import "./Login.css";
 import { Link, useNavigate } from "react-router-dom";
+import api from '../axiosConfig';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -17,7 +17,7 @@ const Login = () => {
 const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:3000/auth/login", formData);
+      const res = await api.post("/auth/login", formData);
       console.log("Login response:", res.data);
       // Lưu token luôn
       const token = res.data;
@@ -39,7 +39,7 @@ const handleSubmit = async (e) => {
             const role = payload.role ?? null;
             console.log("Token id:", id, "role:", role);
             localStorage.setItem("user", JSON.stringify({ id, role }));
-            
+
             alert("Đăng nhập thành công!");
 
             if(role === "admin")
