@@ -99,19 +99,14 @@ exports.forgotPassword = async (req, res) => {
             return res.status(404).json({ message: 'Email không tồn tại trong hệ thống' });
         }
         const resetToken = crypto.randomBytes(32).toString('hex');
-
         user.resetPasswordToken = crypto
             .createHash('sha256')
             .update(resetToken)
             .digest('hex');
-
         user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // Token hết hạn sau 15 phút
-
         await user.save();
-
         // 6. Tạo link reset password
         const resetUrl = `http://localhost:3001/reset-password?token=${resetToken}`;
-
         // 7. Cấu hình nội dung email
         const mailOptions = {
             from: {
@@ -122,10 +117,8 @@ exports.forgotPassword = async (req, res) => {
             subject: '🔐 Reset Password Request', // Tiêu đề email
             text: `Bạn đã yêu cầu đặt lại mật khẩu. Truy cập link: ${resetUrl}`, // Nội dung text thuần
         };
-
         // 8. GỬI EMAIL qua Nodemailer
         await transporter.sendMail(mailOptions);
-
         // 9. Trả về response
         res.status(200).json({
             message: 'Email reset password đã được gửi. Vui lòng kiểm tra hộp thư của bạn.'
