@@ -36,7 +36,7 @@ exports.login = async (req, res) => {
                         role: user.role
                     },
                     'dev_secret', // thay bằng biến môi trường trong production
-                    { expiresIn: '30s' }
+                    { expiresIn: '5m' }
                 );
                 const refreshtoken = crypto.randomBytes(64).toString('hex');
 

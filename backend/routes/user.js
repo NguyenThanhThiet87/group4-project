@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router();
 const userController = require('../controllers/userController');
-const {upload} = require('../cloudinary'); 
+const { uploadWithSharp } = require('../cloudinary');
+
 const { authenticateToken, checkRole } = require('../authMiddleware');
 
 router.get('/users', authenticateToken, checkRole('admin', 'moderator'), userController.getUsers);
@@ -10,6 +11,6 @@ router.post('/users', authenticateToken, checkRole('admin', 'moderator'), userCo
 
 router.put('/users/:id', authenticateToken, checkRole('user', 'admin', 'moderator'), userController.updateUser); // PUT
 router.delete('/users/:id', authenticateToken, checkRole('admin', 'moderator'), userController.deleteUser); // DELETE - chỉ admin
-router.post( '/users/upload-avatar', authenticateToken, checkRole('user', 'admin', 'moderator'), upload.single('avatar'), userController.uploadAvatar);
+router.post( '/users/avatar', authenticateToken, checkRole('user', 'admin', 'moderator'), uploadWithSharp, userController.uploadAvatar);
 
 module.exports = router;
