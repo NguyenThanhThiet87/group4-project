@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import "./UserProfile.css";
-import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import api from '../axiosConfig';
 
@@ -95,13 +93,8 @@ const UserProfile = () => {
         avatarFormData.append("avatar", selectedFile);
 
         try {
-          await axios.post(
-            "http://localhost:3000/user/users/upload-avatar",
-            avatarFormData,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data", 
-              },
+          await api.post(
+            "/user/users/upload-avatar",avatarFormData,{headers: {"Content-Type": "multipart/form-data",},
             }
           );
         } catch (uploadError) {
@@ -114,15 +107,9 @@ const UserProfile = () => {
 
       // Step 2: Update user's name and email
       try {
-        await axios.put(
-          `http://localhost:3000/user/users/${user._id}`,
-          { name: user.name, email: user.email },
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
+        await api.put(
+          `/user/users/${user._id}`,
+          { name: user.name, email: user.email });
       } catch (updateError) {
         console.error("❌ Error updating user info:", updateError);
         alert("Lỗi khi cập nhật thông tin. Vui lòng thử lại.");

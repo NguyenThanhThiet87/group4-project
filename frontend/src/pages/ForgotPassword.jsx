@@ -14,6 +14,7 @@ function ForgotPassword() {
       alert("Vui lòng nhập email.");
       return;
     }
+    
     // basic email validation
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!re.test(trimmed)) {
