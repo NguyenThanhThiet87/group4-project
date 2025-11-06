@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const tokenBlacklist = require('./blacklist'); // Import blacklist
+const Logs = require('./models/Logs'); // ← THÊM
+const rateLimit = require('express-rate-limit'); // ← THÊM
 
 exports.authenticateToken = (req, res, next) => {
     const token = req.headers['authorization'];
@@ -39,3 +41,35 @@ exports.checkRole = (...allowedRoles) => {
     next();
   };
 };
+
+// ========== LOG ACTIVITY ========== ← THÊM
+exports.logActivity = (action) => {
+    return async (req, res, next) => {
+        const userId = req.user?.id || req.body?.email || 'anonymous';
+        const ip = req.ip || req.connection.remoteAddress;
+        
+        try {
+            await Logs.create({
+                createdAt: new Date().toISOString(),
+                userId,
+                action,
+                ip
+            });
+            console.log(`✅ [${action}] ${userId} from ${ip}`);
+        } catch (error) {
+            console.error('❌ Log error:', error);
+        }
+        
+        next();
+    };
+};
+
+// ========== RATE LIMIT LOGIN ========== ← THÊM
+exports.rateLimitLogin = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 phút
+    max: 5, // Tối đa 5 request
+    message: 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau 15 phút.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true
+});

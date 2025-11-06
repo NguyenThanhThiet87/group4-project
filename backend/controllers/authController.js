@@ -9,6 +9,7 @@ const crypto = require('crypto');
 
 const tokenBlacklist = require('../blacklist');
 const { match } = require('assert');
+const Logs = require('../models/Logs');
 
 // ← THÊM: Cấu hình Nodemailer (Gmail)
 const transporter = nodemailer.createTransport({
@@ -191,3 +192,49 @@ exports.refreshToken = async (req, res) => {
         res.status(401).json({ message: "Invalid refresh token" });
     }
 }
+
+// Lấy tất cả logs (có phân trang + filter)
+exports.getLogs = async (req, res) => {
+    try {
+        const { 
+            page = 1, 
+            limit = 50, 
+            action, 
+            userId, 
+            startDate, 
+            endDate 
+        } = req.query;
+
+        // Build query filter
+        const filter = {};
+        
+        if (action) filter.action = action;
+        if (userId) filter.userId = userId;
+        
+        if (startDate || endDate) {
+            filter.createdAt = {};
+            if (startDate) filter.createdAt.$gte = startDate;
+            if (endDate) filter.createdAt.$lte = endDate;
+        }
+
+        // Query với phân trang
+        const logs = await Logs.find(filter)
+            .sort({ createdAt: -1 }) // Mới nhất trước
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .exec();
+
+        const count = await Logs.countDocuments(filter);
+
+        res.json({
+            logs,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page,
+            total: count
+        });
+
+    } catch (error) {
+        console.error('❌ Get logs error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
