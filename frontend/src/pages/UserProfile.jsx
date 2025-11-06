@@ -89,12 +89,11 @@ const UserProfile = () => {
       // Step 1: Upload avatar if a new one is selected
       if (selectedFile) {
         const avatarFormData = new FormData();
-        avatarFormData.append("id", user._id);
         avatarFormData.append("avatar", selectedFile);
 
         try {
           await api.post(
-            "/user/users/upload-avatar",avatarFormData,{headers: {"Content-Type": "multipart/form-data",},
+            "/user/users/avatar",avatarFormData,{headers: {"Content-Type": "multipart/form-data",},
             }
           );
         } catch (uploadError) {
