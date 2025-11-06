@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./UserList.css"; // bạn có thể tạo file CSS riêng nếu muốn
 import { useNavigate } from "react-router-dom";
+import api from './axiosConfig';
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -21,7 +22,7 @@ function UserList() {
     try {
       // thử hai endpoint phổ biến; nếu server dùng base path khác thì sửa ở đây
         // fallback nếu route khác trên backend (ví dụ /user/users)
-      let res = await axios.get("http://localhost:3000/user/users");
+      let res = await api.get("/user/users");
 
       // normalize response: có thể server trả mảng trực tiếp hoặc { users: [...] } hoặc { data: [...] }
       const data = res.data?.users ?? res.data?.data ?? res.data;
@@ -45,15 +46,12 @@ function UserList() {
     const ok = window.confirm("Bạn có chắc muốn xóa người dùng này không?");
     if (!ok) return;
 
-    const token = localStorage.getItem("token");
-    const headers = token ? { Authorization: `${token}` } : {};
-
     console.log(id)
     try {
       setDeletingId(id);
      
       // thử fallback route
-      await axios.delete(`http://localhost:3000/user/users/${id}`, { headers });
+      await api.delete(`/user/users/${id}`);
 
       // Nếu thành công xóa trên UI
       setUsers((prev) => prev.filter((u) => u._id !== id));
@@ -84,11 +82,8 @@ function UserList() {
     const refreshToken = localStorage.getItem("refreshToken");
 
     try {
-      await axios.post(
-        "http://localhost:3000/auth/logout",
-        { refreshToken },
-        { headers: { Authorization: token } }
-      );
+      await api.post("/auth/logout",
+{ refreshToken });
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {

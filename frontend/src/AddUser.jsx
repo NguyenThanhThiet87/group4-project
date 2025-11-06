@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from '../axiosConfig';
 
 function AddUser({ fetchUsers }) {
   const [name, setName] = useState("");
@@ -23,7 +23,7 @@ function AddUser({ fetchUsers }) {
 
     try {
       // Gửi dữ liệu lên backend
-      await axios.post("http://192.168.110.210:3000/users", { name, email });
+      await api.post("/users", { name, email });
 
       alert("Thêm user thành công!");
 
