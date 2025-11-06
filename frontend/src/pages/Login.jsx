@@ -52,8 +52,16 @@ const handleSubmit = async (e) => {
         } catch (err) {
           console.warn("Could not fetch user after login:", err);
         }
-    } catch (error) {
-      alert("Sai email hoặc mật khẩu!");
+    } catch (err) {
+      // ← XỬ LÝ LỖI RATE LIMIT
+            if (err.response?.status === 429) {
+                // Rate limit: Quá nhiều request
+                alert('⏰ ' + (err.response.data.message || 'Quá nhiều lần đăng nhập. Vui lòng thử lại sau 15 phút.'));
+            } else if (err.response?.status === 401) {
+                alert('❌ Email hoặc mật khẩu không đúng');
+            } else {
+                alert('❌ ' + (err.response?.data?.message || 'Lỗi đăng nhập'));
+            }
     }
   };
 

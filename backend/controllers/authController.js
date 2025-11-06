@@ -9,6 +9,7 @@ const crypto = require('crypto');
 
 const tokenBlacklist = require('../blacklist');
 const { match } = require('assert');
+const Logs = require('../models/Logs');
 
 // ← THÊM: Cấu hình Nodemailer (Gmail)
 const transporter = nodemailer.createTransport({
@@ -99,19 +100,14 @@ exports.forgotPassword = async (req, res) => {
             return res.status(404).json({ message: 'Email không tồn tại trong hệ thống' });
         }
         const resetToken = crypto.randomBytes(32).toString('hex');
-
         user.resetPasswordToken = crypto
             .createHash('sha256')
             .update(resetToken)
             .digest('hex');
-
         user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // Token hết hạn sau 15 phút
-
         await user.save();
-
         // 6. Tạo link reset password
         const resetUrl = `http://localhost:3001/reset-password?token=${resetToken}`;
-
         // 7. Cấu hình nội dung email
         const mailOptions = {
             from: {
@@ -122,10 +118,8 @@ exports.forgotPassword = async (req, res) => {
             subject: '🔐 Reset Password Request', // Tiêu đề email
             text: `Bạn đã yêu cầu đặt lại mật khẩu. Truy cập link: ${resetUrl}`, // Nội dung text thuần
         };
-
         // 8. GỬI EMAIL qua Nodemailer
         await transporter.sendMail(mailOptions);
-
         // 9. Trả về response
         res.status(200).json({
             message: 'Email reset password đã được gửi. Vui lòng kiểm tra hộp thư của bạn.'
@@ -198,3 +192,49 @@ exports.refreshToken = async (req, res) => {
         res.status(401).json({ message: "Invalid refresh token" });
     }
 }
+
+// Lấy tất cả logs (có phân trang + filter)
+exports.getLogs = async (req, res) => {
+    try {
+        const { 
+            page = 1, 
+            limit = 50, 
+            action, 
+            userId, 
+            startDate, 
+            endDate 
+        } = req.query;
+
+        // Build query filter
+        const filter = {};
+        
+        if (action) filter.action = action;
+        if (userId) filter.userId = userId;
+        
+        if (startDate || endDate) {
+            filter.createdAt = {};
+            if (startDate) filter.createdAt.$gte = startDate;
+            if (endDate) filter.createdAt.$lte = endDate;
+        }
+
+        // Query với phân trang
+        const logs = await Logs.find(filter)
+            .sort({ createdAt: -1 }) // Mới nhất trước
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .exec();
+
+        const count = await Logs.countDocuments(filter);
+
+        res.json({
+            logs,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page,
+            total: count
+        });
+
+    } catch (error) {
+        console.error('❌ Get logs error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
