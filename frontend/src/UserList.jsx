@@ -3,6 +3,7 @@ import axios from "axios";
 import "./UserList.css"; // bạn có thể tạo file CSS riêng nếu muốn
 import { useNavigate } from "react-router-dom";
 import api from './axiosConfig';
+import LogsPanel from "./LogsPanel";
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -94,6 +95,7 @@ function UserList() {
     }
   };
 
+  
 
   if (loading) return <p>Đang tải danh sách người dùng...</p>;
 
@@ -131,6 +133,8 @@ function UserList() {
           )}
         </tbody>
       </table>
+
+       <LogsPanel />
     </div>
   );
 }
