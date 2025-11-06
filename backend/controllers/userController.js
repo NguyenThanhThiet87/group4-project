@@ -116,7 +116,7 @@ exports.uploadAvatar = async (req, res) => {
 
     const avatarUrl = req.file.path;
 
-    user.avatar = avatarUrl;
+    user.image = avatarUrl;
     await user.save();
     console.log('✅ Avatar uploaded:', avatarUrl);
 
