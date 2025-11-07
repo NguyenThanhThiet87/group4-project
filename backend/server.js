@@ -4,7 +4,12 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://group4-project-three.vercel.app'
+];
+
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
 // routes
