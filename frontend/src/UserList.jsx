@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./UserList.css"; // bạn có thể tạo file CSS riêng nếu muốn
+import { useNavigate } from "react-router-dom";
+import api from './axiosConfig';
+import LogsPanel from "./LogsPanel";
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -8,6 +11,7 @@ function UserList() {
   const [formData, setFormData] = useState({ name: "", email: "" });
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const navigate = useNavigate();
 
   // 🟢 Lấy danh sách người dùng khi load trang
   useEffect(() => {
@@ -19,7 +23,7 @@ function UserList() {
     try {
       // thử hai endpoint phổ biến; nếu server dùng base path khác thì sửa ở đây
         // fallback nếu route khác trên backend (ví dụ /user/users)
-      let res = await axios.get("http://localhost:3000/user/users");
+      let res = await api.get("/user/users");
 
       // normalize response: có thể server trả mảng trực tiếp hoặc { users: [...] } hoặc { data: [...] }
       const data = res.data?.users ?? res.data?.data ?? res.data;
@@ -43,15 +47,12 @@ function UserList() {
     const ok = window.confirm("Bạn có chắc muốn xóa người dùng này không?");
     if (!ok) return;
 
-    const token = localStorage.getItem("token");
-    const headers = token ? { Authorization: `${token}` } : {};
-
     console.log(id)
     try {
       setDeletingId(id);
      
       // thử fallback route
-      await axios.delete(`http://localhost:3000/user/users/${id}`, { headers });
+      await api.delete(`/user/users/${id}`);
 
       // Nếu thành công xóa trên UI
       setUsers((prev) => prev.filter((u) => u._id !== id));
@@ -77,12 +78,31 @@ function UserList() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleLogout = async () => {
+    const token = localStorage.getItem("token");
+    const refreshToken = localStorage.getItem("refreshToken");
 
+    try {
+      await api.post("/auth/logout",
+{ refreshToken });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      navigate("/");
+    }
+  };
+
+  
+  
   if (loading) return <p>Đang tải danh sách người dùng...</p>;
 
   return (
     <div className="admin-container">
       <h2>👤 Quản lý người dùng</h2>
+      <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
 
       {/* Danh sách user */}
       <table className="user-table">
@@ -113,6 +133,8 @@ function UserList() {
           )}
         </tbody>
       </table>
+
+       <LogsPanel />
     </div>
   );
 }

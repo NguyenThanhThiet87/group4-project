@@ -1,11 +1,15 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const RefreshToken = require('../models/RefreshToken');
+
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const nodemailer = require('nodemailer'); 
+const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
 const tokenBlacklist = require('../blacklist');
+const { match } = require('assert');
+const Logs = require('../models/Logs');
 
 // ← THÊM: Cấu hình Nodemailer (Gmail)
 const transporter = nodemailer.createTransport({
@@ -22,19 +26,28 @@ exports.login = async (req, res) => {
         const regex = new RegExp("[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+")
         const user = await User.findOne({ email: email })
         if (user != null) {
-            if (bcrypt.compare(password, user.password)) //dùng bcrypt
+            const match = await bcrypt.compare(password, user.password)
+            if (match) //dùng bcrypt
             {
                 // ký token với đầy đủ thông tin user
                 const token = jwt.sign(
-                    { 
+                    {
                         sub: user._id.toString(),
                         email: user.email,
-                        role: user.role  // ← QUAN TRỌNG: thêm role vào token
+                        role: user.role
                     },
                     'dev_secret', // thay bằng biến môi trường trong production
-                    { expiresIn: '1h' }
-                );
-                res.json({accessToken: token})
+                    { expiresIn: '1m' }
+          );
+                const refreshtoken = crypto.randomBytes(64).toString('hex');
+
+                await RefreshToken.create({
+                    userId: user._id.toString(),
+                    refreshToken: refreshtoken,
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+                });
+
+                res.json({ accessToken: token, refreshToken: refreshtoken })
             } else {
                 res.status(401).json({ message: "Incorrect password" });
             }
@@ -51,7 +64,7 @@ exports.register = async (req, res) => {
         const user = await User.findOne({ email: email })
         if (user == null) {
             pass = await bcrypt.hash(password, 10)
-            const created = await User.create({ name: name, email: email, password: pass, role: 'user'})
+            const created = await User.create({ name: name, email: email, password: pass, role: 'user' })
             res.status(201).json(created);
         } else {
             res.status(404).json({ message: "Already exist" });
@@ -59,8 +72,9 @@ exports.register = async (req, res) => {
     }
 }
 
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
     const token = req.headers['authorization'];
+    const { refreshToken } = req.body || {};
 
     if (!token) {
         return res.status(400).json({ message: 'Không tìm thấy token' });
@@ -69,33 +83,31 @@ exports.logout = (req, res) => {
     // Thêm token vào blacklist
     tokenBlacklist.add(token);
 
+    if (refreshToken) {
+        await RefreshToken.deleteOne({ refreshToken: refreshToken });
+    }
+
     res.status(200).json({ message: 'Đăng xuất thành công' });
 };
 
 exports.forgotPassword = async (req, res) => {
-    const {email } = req.body || {};
+    const { email } = req.body || {};
     if (!email) {
         return res.status(400).json({ message: 'Email is required' });
-    }else
-    {
+    } else {
         const user = await User.findOne({ email: email });
         if (!user) {
             return res.status(404).json({ message: 'Email không tồn tại trong hệ thống' });
         }
         const resetToken = crypto.randomBytes(32).toString('hex');
-
         user.resetPasswordToken = crypto
             .createHash('sha256')
             .update(resetToken)
             .digest('hex');
-
         user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // Token hết hạn sau 15 phút
-
         await user.save();
-        
         // 6. Tạo link reset password
-        const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
-
+        const resetUrl = `http://localhost:3001/reset-password?token=${resetToken}`;
         // 7. Cấu hình nội dung email
         const mailOptions = {
             from: {
@@ -106,13 +118,11 @@ exports.forgotPassword = async (req, res) => {
             subject: '🔐 Reset Password Request', // Tiêu đề email
             text: `Bạn đã yêu cầu đặt lại mật khẩu. Truy cập link: ${resetUrl}`, // Nội dung text thuần
         };
-
         // 8. GỬI EMAIL qua Nodemailer
         await transporter.sendMail(mailOptions);
-
         // 9. Trả về response
-        res.status(200).json({ 
-            message: 'Email reset password đã được gửi. Vui lòng kiểm tra hộp thư của bạn.' 
+        res.status(200).json({
+            message: 'Email reset password đã được gửi. Vui lòng kiểm tra hộp thư của bạn.'
         });
     }
 }
@@ -121,8 +131,7 @@ exports.resetPassword = async (req, res) => {
     const { token, newPassword } = req.body || {};
     if (!token || !newPassword) {
         return res.status(400).json({ message: 'Token và mật khẩu mới là bắt buộc' });
-    }else
-    {
+    } else {
         // 3. Hash token từ request để so sánh với DB
         const hashedToken = crypto
             .createHash('sha256')
@@ -135,9 +144,9 @@ exports.resetPassword = async (req, res) => {
             resetPasswordExpires: { $gt: Date.now() } // Token chưa hết hạn
         });
 
-         if (!user) {
-            return res.status(400).json({ 
-                message: 'Token không hợp lệ hoặc đã hết hạn' 
+        if (!user) {
+            return res.status(400).json({
+                message: 'Token không hợp lệ hoặc đã hết hạn'
             });
         }
 
@@ -146,7 +155,86 @@ exports.resetPassword = async (req, res) => {
 
         // 6. Cập nhật mật khẩu và xóa reset token
         user.password = hashedPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
         await user.save();
         res.status(200).json({ message: 'Mật khẩu đã được đặt lại thành công' });
     }
 }
+
+exports.refreshToken = async (req, res) => {
+    const { refreshToken } = req.body || {};
+    if (!refreshToken) {
+        return res.status(400).json({ message: 'Refresh token is required' });
+    }
+
+    const refreshTokenStored = await RefreshToken.findOne({ refreshToken: refreshToken })
+    
+    if (refreshTokenStored != null && refreshToken == refreshTokenStored.refreshToken) {
+        const user = await User.findOne({ _id: refreshTokenStored.userId })
+        if (user != null) {
+            // ký token với đầy đủ thông tin user
+            const token = jwt.sign(
+                {
+                    sub: user._id.toString(),
+                    email: user.email,
+                    role: user.role
+                },
+                'dev_secret', // thay bằng biến môi trường trong production
+                { expiresIn: '1h' }
+            );
+            res.json({ accessToken: token })
+        } else {
+            res.status(404).json({ message: "Not found" });
+        }
+    }else
+    {
+        res.status(401).json({ message: "Invalid refresh token" });
+    }
+}
+
+// Lấy tất cả logs (có phân trang + filter)
+exports.getLogs = async (req, res) => {
+    try {
+        const { 
+            page = 1, 
+            limit = 50, 
+            action, 
+            userId, 
+            startDate, 
+            endDate 
+        } = req.query;
+
+        // Build query filter
+        const filter = {};
+        
+        if (action) filter.action = action;
+        if (userId) filter.userId = userId;
+        
+        if (startDate || endDate) {
+            filter.createdAt = {};
+            if (startDate) filter.createdAt.$gte = startDate;
+            if (endDate) filter.createdAt.$lte = endDate;
+        }
+
+        // Query với phân trang
+        const logs = await Logs.find(filter)
+            .sort({ createdAt: -1 }) // Mới nhất trước
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .exec();
+
+        const count = await Logs.countDocuments(filter);
+
+        res.json({
+            logs,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page,
+            total: count
+        });
+
+    } catch (error) {
+        console.error('❌ Get logs error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};

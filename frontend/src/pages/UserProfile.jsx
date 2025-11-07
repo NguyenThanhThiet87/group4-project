@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import "./UserProfile.css";
+import { useNavigate } from "react-router-dom";
+import api from '../axiosConfig';
 
 const UserProfile = () => {
   const [user, setUser] = useState({ name: "", email: "", avatar: "" });
@@ -8,38 +9,52 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const navigate = useNavigate(); // điều hướng sau khi đăng nhập
 
   // Get user on page load
   useEffect(() => {
-    let storedUser = null;
-    try {
-      const raw = localStorage.getItem("user");
-      if (raw) storedUser = JSON.parse(raw);
-    } catch (err) {
-      console.warn("Invalid stored user JSON, ignoring", err);
-      storedUser = null;
-    }
 
-    const id = storedUser?.[0]?._id;
-    if (id) fetchUser(id);
-    else alert("Không tìm thấy thông tin người dùng. Hãy đăng nhập lại!");
+    //lay id user da dang nhap
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const id = storedUser?.id;
+
+    if (id) 
+      fetchUser(id);
+    else {
+      alert("Không tìm thấy thông tin người dùng. Hãy đăng nhập lại!");
+      navigate("/"); // Điều hướng về trang đăng nhập
+      return;
+    }
   }, []);
 
   // Fetch user by ID from API
   const fetchUser = async (id) => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get(`http://localhost:3000/user/users/${id}`);
-      const payload = res.data?.user ?? res.data?.data ?? res.data;
-      const normalized = Array.isArray(payload) ? payload[0] : payload;
-      setUser(normalized || { name: "", email: "", avatar: "" });
-    } catch (error) {
+      setLoading(true);
+      try {
+        // 1. Lấy token từ localStorage
+        const token = localStorage.getItem("accessToken");
+
+        // 2. Kiểm tra nếu có token
+        if (!token) {
+          alert("Không tìm thấy token. Vui lòng đăng nhập lại.");
+          setLoading(false);
+          navigate("/"); // Điều hướng về trang đăng nhập
+          return;
+        }
+
+        // 3. Thêm token vào headers của request
+        const res = await api.get(`user/users/${id}`);
+
+        const payload = res.data?.user ?? res.data?.data ?? res.data;
+        const normalized = Array.isArray(payload) ? payload[0] : payload;
+        setUser(normalized || { name: "", email: "", avatar: "" });
+
+      } catch (error) {
       console.error("❌ Error fetching user info:", error);
     } finally {
       setLoading(false);
     }
-  };
+    };
 
   // Handle text input changes
   const handleChange = (e) => {
@@ -64,7 +79,7 @@ const UserProfile = () => {
       return;
     }
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (!token) {
       alert("Authentication token not found. Please log in again.");
       return;
@@ -76,17 +91,11 @@ const UserProfile = () => {
       // Step 1: Upload avatar if a new one is selected
       if (selectedFile) {
         const avatarFormData = new FormData();
-        avatarFormData.append("id", user._id);
         avatarFormData.append("avatar", selectedFile);
 
         try {
-          await axios.post(
-            "http://localhost:3000/user/users/upload-avatar",
-            avatarFormData,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
+          await api.post(
+            "/user/users/avatar",avatarFormData,{headers: {"Content-Type": "multipart/form-data",},
             }
           );
         } catch (uploadError) {
@@ -99,15 +108,9 @@ const UserProfile = () => {
 
       // Step 2: Update user's name and email
       try {
-        await axios.put(
-          `http://localhost:3000/user/users/${user._id}`,
-          { name: user.name, email: user.email },
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
+        await api.put(
+          `/user/users/${user._id}`,
+          { name: user.name, email: user.email });
       } catch (updateError) {
         console.error("❌ Error updating user info:", updateError);
         alert("Lỗi khi cập nhật thông tin. Vui lòng thử lại.");
@@ -143,6 +146,24 @@ const UserProfile = () => {
     }
     return "https://cdn-icons-png.flaticon.com/512/847/847969.png";
   };
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem("token");
+    const refreshToken = localStorage.getItem("refreshToken");
+
+    try {
+      await api.post("/auth/logout",
+                      { refreshToken });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      navigate("/");
+    }
+  };
+
 
   return (
     <div className="profile-container">
@@ -187,6 +208,8 @@ const UserProfile = () => {
           </button>
         )}
       </div>
+      <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
+
     </div>
   );
 };

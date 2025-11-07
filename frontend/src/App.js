@@ -1,5 +1,6 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./features/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import UserProfile from "./pages/UserProfile";
@@ -12,33 +13,26 @@ function App() {
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/Register" element={<Register />} />
-      <Route path="/Profile" element={<UserProfile />} />
-      <Route path="/ForgotPassword" element={<ForgotPassword/>} />
-      <Route path="/reset-password" element={<ResetPassword/>} />
-      <Route path="/UserList" element={<UserList />} />
+      <Route
+        path="/Profile"
+        element={
+          <ProtectedRoute>
+            <UserProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/ForgotPassword" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route
+        path="/UserList"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <UserList />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
 
 export default App;
-// import React from "react";
-// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-// import Login from "./pages/Login";
-// import Register from "./pages/Register";
-
-// function App() {
-//   return (
-//     <Router>
-//       <Routes>
-//         {/* Trang đăng nhập */}
-//         <Route path="/" element={<Login />} />
-
-//         {/* Trang đăng ký */}
-//         <Route path="/register" element={<Register />}>
-//         </Route>
-//       </Routes>
-//     </Router>
-//   );
-// }
-
-// export default App;

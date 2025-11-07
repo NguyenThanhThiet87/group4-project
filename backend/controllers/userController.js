@@ -84,31 +84,29 @@ exports.deleteUser = async (req, res) => {
 
 exports.uploadAvatar = async (req, res) => {
   try {
-    // 1. Kiểm tra có file không
     if (!req.file) {
       return res.status(400).json({ message: 'Vui lòng chọn file ảnh' });
     }
 
-    // 2. Lấy userId
-    const userId = req.body.id;
+    // ← LẤY userId TỪ TOKEN (authenticateToken đã gán req.user)
+    const userId = req.user.id || req.user.sub; // Tùy JWT payload bạn dùng field nào
 
     if (!userId) {
       return res.status(401).json({ message: 'Không tìm thấy thông tin user' });
     }
 
-    // 3. Tìm user
     const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: 'User không tồn tại' });
     }
-    // 4. Xóa avatar cũ (nếu có)
-    if (user.image) { // ← SỬA: user.avatar (không phải user.image)
+
+    // Xóa avatar cũ
+    if (user.avatar) {
       try {
         const urlParts = user.avatar.split('/');
         const publicIdWithExtension = urlParts[urlParts.length - 1];
         const publicId = `avatars/${publicIdWithExtension.split('.')[0]}`;
-
         await cloudinary.uploader.destroy(publicId);
         console.log('✅ Deleted old avatar:', publicId);
       } catch (error) {
@@ -116,19 +114,19 @@ exports.uploadAvatar = async (req, res) => {
       }
     }
 
-    // 5. Lấy URL ảnh (đã upload bởi middleware)
     const avatarUrl = req.file.path;
 
-    // 6. Cập nhật database
     user.image = avatarUrl;
     await user.save();
     console.log('✅ Avatar uploaded:', avatarUrl);
 
     res.status(200).json({
-      message: 'Upload avatar thành công'
+      message: 'Upload avatar thành công',
+      avatarUrl: avatarUrl
     });
 
   } catch (error) {
     console.error('❌ Upload avatar error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
