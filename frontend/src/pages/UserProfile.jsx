@@ -20,9 +20,11 @@ const UserProfile = () => {
 
     if (id) 
       fetchUser(id);
-    else 
+    else {
       alert("Không tìm thấy thông tin người dùng. Hãy đăng nhập lại!");
-
+      navigate("/"); // Điều hướng về trang đăng nhập
+      return;
+    }
   }, []);
 
   // Fetch user by ID from API
@@ -145,6 +147,24 @@ const UserProfile = () => {
     return "https://cdn-icons-png.flaticon.com/512/847/847969.png";
   };
 
+  const handleLogout = async () => {
+    const token = localStorage.getItem("token");
+    const refreshToken = localStorage.getItem("refreshToken");
+
+    try {
+      await api.post("/auth/logout",
+                      { refreshToken });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      navigate("/");
+    }
+  };
+
+
   return (
     <div className="profile-container">
       <h2>Thông tin người dùng</h2>
@@ -188,6 +208,8 @@ const UserProfile = () => {
           </button>
         )}
       </div>
+      <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
+
     </div>
   );
 };

@@ -75,7 +75,7 @@ exports.rateLimitLogin = rateLimit({
     // ← QUAN TRỌNG: Tạo key theo EMAIL, không phải IP
     keyGenerator: (req) => {
         // Lấy email từ body
-        return req.body.email || req.ip;
+        return req.body.email;
     },
     
     // ← CHỈ ĐẾM REQUEST THẤT BẠI

@@ -36,8 +36,15 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    const skipRefresh = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password'].some((path) =>
+      originalRequest?.url?.includes(path)
+    );
+    const refreshToken = localStorage.getItem("refreshToken");
+
     // handle 401 / 403 once per request
-    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry &&
+      !skipRefresh &&
+      refreshToken) {
       if (isRefreshing) {
         // queue request until refresh finishes
         return new Promise((resolve, reject) => {
@@ -61,9 +68,9 @@ api.interceptors.response.use(
 
         const newAccessToken = resp.data?.accessToken;
         if (!newAccessToken) throw new Error("No accessToken returned from refresh");
-        else 
+        else
           console.log("newAccessToken", newAccessToken)
-        
+
         // store token in same key you use
         localStorage.setItem("accessToken", newAccessToken);
 
